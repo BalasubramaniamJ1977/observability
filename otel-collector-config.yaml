@@ -1,0 +1,66 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+
+  memory_limiter:
+    limit_mib: 512
+    check_interval: 1s
+
+  resource:
+    attributes:
+      - key: deployment.environment
+        value: payment-system
+        action: upsert
+
+exporters:
+  # Traces → Tempo via OTLP gRPC
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+
+  # Metrics → Prometheus scrape endpoint
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: payment
+    send_timestamps: true
+    metric_expiration: 3m
+
+  # Logs → Loki via OTLP HTTP (loki exporter was removed; Loki 3.x accepts OTLP natively)
+  otlphttp/loki:
+    endpoint: http://loki:3100/otlp
+    tls:
+      insecure: true
+
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [otlp/tempo]
+
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [prometheus]
+
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [otlphttp/loki]
+
+  telemetry:
+    logs:
+      level: warn

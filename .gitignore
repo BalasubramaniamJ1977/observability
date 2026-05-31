@@ -1,0 +1,26 @@
+# Claude Code session data
+.claude/
+
+# Downloaded/extracted binary distributions — do not commit
+grafana-13.0.1+security-01/
+elasticsearch-9.3.1/
+opentelemetry-python/
+
+# Binaries and archives
+*.exe
+*.tar.gz
+*.zip
+
+# Elasticsearch runtime data
+elasticsearch*/data/
+elasticsearch*/logs/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
